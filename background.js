@@ -13,6 +13,42 @@ function getFileData(url, callback) {
 	xmlhttp.send();
 }
 
+function getUrlOnReady(url) {
+	return new Promise(function (resolve, reject) {
+		var req = new XMLHttpRequest();
+		req.open('GET', url, true);
+		req.onreadystatechange = function () {
+			if (req.readyState === 4 && req.status === 200) {
+				resolve(req.responseText);
+			} else {
+				reject(new Error(req.statusText));
+			}
+		};
+		req.onerror = function () {
+			reject(new Error(req.statusText));
+		};
+		req.send();
+	});
+}
+
+function getUrl(url) {
+	return new Promise(function (resolve, reject) {
+		var req = new XMLHttpRequest();
+		req.open('GET', url, true);
+		req.onload = function () {
+			if (req.status === 200) {
+				resolve(req.responseText);
+			} else {
+				reject(new Error(req.statusText));
+			}
+		};
+		req.onerror = function () {
+			reject(new Error(req.statusText));
+		};
+		req.send();
+	});
+}
+
 function postFileData(url, data, callback) {
 	var encodeData = "", append = false;
 	Object.keys(data).forEach(function(key) {
@@ -129,26 +165,31 @@ function checkDynamic() {
 	});
 }
 
-function getCid(avid, callback) {
+function getCid(avid) {
 	if (typeof cidCache[avid] != "undefined") {
-		callback(cidCache[avid], true);
-		return true;
+		return Promise.resolve(cidCache[avid]);
 	}
-	getFileData("http://api.bilibili.com/view?type=json&appkey=95acd7f6cc3392f3&id=" + avid + "&page=1", function(avInfo) {
+
+	return getUrlOnReady("http://api.bilibili.com/view?type=json&appkey=95acd7f6cc3392f3&id=" + avid + "&page=1").then(function(avInfo) {
 		avInfo = JSON.parse(avInfo);
 		if (typeof avInfo.code != "undefined" && avInfo.code == -503) {
-			setTimeout(function() {
-				getCid(avid, callback);
-			}, 1000);
+			return Promise.reject(new Error(avid));
 		} else {
 			if (typeof avInfo.cid == "number") {
 				cidCache[avid] = avInfo.cid;
 				localStorage.setItem("cidCache", JSON.stringify(cidCache));
 			}
-			callback(avInfo.cid, false);
+			return avInfo.cid;
 		}
+	}, function(error) {
+		var promise = new Promise();
+		setTimeout(function() {
+			getCid(error.message).then(function(cid) {
+				promise.resolve(cid);
+			});
+		}, 1000);
+		return promise;
 	});
-	return true;
 }
 
 chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
