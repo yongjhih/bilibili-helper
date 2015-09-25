@@ -365,21 +365,21 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
 			var errorCode = ["正常", "选择的弹幕模式错误", "用户被禁止", "系统禁止",
 			"投稿不存在", "UP主禁止", "权限有误", "视频未审核/未发布", "禁止游客弹幕"];
 			request.comment.cid = request.cid;
-			postFileData("http://interface.bilibili.com/dmpost?cid=" + request.cid +
-				"&aid=" + request.avid + "&pid=" + request.page, request.comment, function (result) {
-					result = parseInt(result);
-					if (result < 0) {
-						sendResponse({
-							result: false,
-							error: errorCode[-result]
-						});
-					} else {
-						sendResponse({
-							result: true,
-							id: result
-						});
-					}
-				});
+			postUrlWithDataOnReady("http://interface.bilibili.com/dmpost?cid=" + request.cid +
+				"&aid=" + request.avid + "&pid=" + request.page, request.comment).then(function(result) {
+				result = parseInt(result);
+				if (result < 0) {
+					sendResponse({
+						result: false,
+						error: errorCode[-result]
+					});
+				} else {
+					sendResponse({
+						result: true,
+						id: result
+					});
+				}
+			});
 			return true;
 		default:
 			sendResponse({
