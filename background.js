@@ -33,20 +33,60 @@ function getUrlOnReady(url) {
 
 function getUrl(url) {
 	return new Promise(function (resolve, reject) {
-		var req = new XMLHttpRequest();
-		req.open('GET', url, true);
-		req.onload = function () {
-			if (req.status === 200) {
-				resolve(req.responseText);
+		var request = new XMLHttpRequest();
+		request.open('GET', url, true);
+		request.onload = function () {
+			if (request.status === 200) {
+				resolve(request.responseText);
 			} else {
-				reject(new Error(req.statusText));
+				reject(new Error(request.statusText));
 			}
 		};
-		req.onerror = function () {
-			reject(new Error(req.statusText));
+		request.onerror = function () {
+			reject(new Error(request.statusText));
 		};
-		req.send();
+		request.send();
 	});
+}
+
+function postUrlOnReady(url, data) {
+	return postUrlWithEncodedDataOnReady(url, null);
+}
+
+function postUrlWithEncodedDataOnReady(url, data) {
+	return new Promise(function (resolve, reject) {
+		request = new XMLHttpRequest();
+		request.open("POST", url, true);
+		request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+		request.onreadystatechange = function() {
+			if (request.readyState === 4 && request.status === 200) {
+				resolve(request.responseText);
+			} else {
+				reject(new Error(request.statusText));
+			}
+		}
+		request.onerror = function () {
+			reject(new Error(request.statusText));
+		};
+		if (data != null) request.send(data);
+		else request.send();
+	});
+}
+
+function postUrlWithDataOnReady(url, data) {
+	var encodedData = "", append = false;
+
+	Object.keys(data).forEach(function(key) {
+		if (!append) {
+			append = true;
+		} else {
+			encodedData += "&";
+		}
+		encodedData += encodeURIComponent(key).replace(/%20/g, "+") + "=" +
+			encodeURIComponent(data[key]).replace(/%20/g, "+");
+	});
+
+	return postUrlWithEncodedDataOnReady(url, encodedData);
 }
 
 function postFileData(url, data, callback) {
