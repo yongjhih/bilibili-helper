@@ -20,8 +20,6 @@ function getUrlOnReady(url) {
 		req.onreadystatechange = function () {
 			if (req.readyState === 4 && req.status === 200) {
 				resolve(req.responseText);
-			} else {
-				reject(new Error(req.statusText));
 			}
 		};
 		req.onerror = function () {
