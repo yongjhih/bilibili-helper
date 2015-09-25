@@ -302,28 +302,6 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
 			getUrlOnReady(url["download"]).then(function(avDownloadLink) {
 				avDownloadLink = JSON.parse(avDownloadLink);
 				if (getOption("dlquality") == 'mp4') {
-					sendResponse({
-						download: avDownloadLink,
-						playback: avDownloadLink,
-						dlquality: getOption("dlquality"),
-						rel_search: getOption("rel_search")
-					});
-				} else {
-					getUrlOnReady(url["playback"]).then(function(avPlaybackLink) {
-						avPlaybackLink = JSON.parse(avPlaybackLink);
-						sendResponse({
-							download: avDownloadLink,
-							playback: avPlaybackLink,
-							dlquality: getOption("dlquality"),
-							rel_search: getOption("rel_search")
-						});
-					});
-				}
-			});
-			/*
-			getUrlOnReady(url["download"]).then(function(avDownloadLink) {
-				avDownloadLink = JSON.parse(avDownloadLink);
-				if (getOption("dlquality") == 'mp4') {
 					return {
 						download: avDownloadLink,
 						playback: avDownloadLink,
@@ -344,7 +322,6 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
 			}).then(function(it) {
 				sendResponse(it);
 			});
-			*/
 			return true;
 		case "getMyInfo":
 			getUrlOnReady("http://api.bilibili.com/myinfo").then(function(myinfo) {
