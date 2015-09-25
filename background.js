@@ -171,7 +171,7 @@ function checkDynamic() {
 	}, function(cookie) {
 		if (cookie === null) return false;
 		else if (getOption("dynamic") == "on") {
-			getFileData("http://interface.bilibili.com/nav.js", function(data) {
+			getUrlOnReady("http://interface.bilibili.com/nav.js").then(function(data) {
 				chrome.cookies.get({
 					url: "http://interface.bilibili.com/nav.js",
 					name: "_cnt_dyn"
@@ -232,6 +232,15 @@ function getCid(avid) {
 	});
 }
 
+/*
+listenerPromise(promise, response) {
+	promise.then(function(it) {
+		if (it != null) response(it);
+		else response();
+	});
+}
+*/
+
 chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
 	switch (request.command) {
 		case "init":
@@ -274,7 +283,7 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
 			});
 			return true;
 		case "getVideoInfo":
-			getFileData("http://api.bilibili.com/view?type=json&appkey=95acd7f6cc3392f3&id=" + request.avid + "&page=" + request.pg, function(avInfo) {
+			getUrlOnReady("http://api.bilibili.com/view?type=json&appkey=95acd7f6cc3392f3&id=" + request.avid + "&page=" + request.pg).then(function(avInfo) {
 				avInfo = JSON.parse(avInfo);
 				sendResponse({
 					videoInfo: avInfo
@@ -292,7 +301,7 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
 					playback: "https://bilibili.guguke.net/playurl.json?cid=" + request.cid + "&type=mp4"
 				}
 			}
-			getFileData(url["download"], function(avDownloadLink) {
+			getUrlOnReady(url["download"]).then(function(avDownloadLink) {
 				avDownloadLink = JSON.parse(avDownloadLink);
 				if (getOption("dlquality") == 'mp4') {
 					sendResponse({
@@ -302,7 +311,7 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
 						rel_search: getOption("rel_search")
 					});
 				} else {
-					getFileData(url["playback"], function(avPlaybackLink) {
+					getUrlOnReady(url["playback"]).then(function(avPlaybackLink) {
 						avPlaybackLink = JSON.parse(avPlaybackLink);
 						sendResponse({
 							download: avDownloadLink,
@@ -313,9 +322,34 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
 					});
 				}
 			});
+			/*
+			getUrlOnReady(url["download"]).then(function(avDownloadLink) {
+				avDownloadLink = JSON.parse(avDownloadLink);
+				if (getOption("dlquality") == 'mp4') {
+					return {
+						download: avDownloadLink,
+						playback: avDownloadLink,
+						dlquality: getOption("dlquality"),
+						rel_search: getOption("rel_search")
+					};
+				} else {
+					return getUrlOnReady(url["playback"]).then(function(avPlaybackLink) {
+						avPlaybackLink = JSON.parse(avPlaybackLink);
+						return {
+							download: avDownloadLink,
+							playback: avPlaybackLink,
+							dlquality: getOption("dlquality"),
+							rel_search: getOption("rel_search")
+						};
+					});
+				}
+			}).then(function(it) {
+				sendResponse(it);
+			});
+			*/
 			return true;
 		case "getMyInfo":
-			getFileData("http://api.bilibili.com/myinfo", function(myinfo) {
+			getUrlOnReady("http://api.bilibili.com/myinfo").then(function(myinfo) {
 				myinfo = JSON.parse(myinfo);
 				if (typeof myinfo.code == undefined) myinfo.code = 200;
 				sendResponse({
@@ -326,7 +360,7 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
 			return true;
 		case "searchVideo":
 			var keyword = request.keyword;
-			getFileData("http://api.bilibili.com/search?type=json&appkey=95acd7f6cc3392f3&keyword=" + encodeURIComponent(keyword) + "&page=1&order=ranklevel", function(searchResult) {
+			getUrlOnReady("http://api.bilibili.com/search?type=json&appkey=95acd7f6cc3392f3&keyword=" + encodeURIComponent(keyword) + "&page=1&order=ranklevel").then(function(searchResult) {
 				searchResult = JSON.parse(searchResult);
 				if (searchResult.code == 0) {
 					sendResponse({
@@ -343,7 +377,7 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
 			});
 			return true;
 		case "checkComment":
-			getFileData("http://www.bilibili.com/feedback/arc-" + request.avid + "-1.html", function(commentData) {
+			getUrlOnReady("http://www.bilibili.com/feedback/arc-" + request.avid + "-1.html").then(function(commentData) {
 				var test = commentData.indexOf('<div class="no_more">');
 				if (test >= 0) {
 					sendResponse({
